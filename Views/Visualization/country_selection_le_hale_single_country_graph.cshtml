@@ -1,0 +1,103 @@
+﻿
+@{
+    ViewBag.Title = "Select Country";
+}
+
+
+<head>
+    <style>
+        .cennter {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+        #continueButton {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            margin-left: 24px;
+            display: block;
+            cursor: pointer;
+        }
+
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+</head>
+
+<br />
+<h4 style="text-align: center">Please select the country first...</h4>
+<br />
+<p style="margin: 2px">
+    <ul>
+        <li>
+            Please select the country and press continue to visualize the data for Life Expectancy (Male, Female and Overall) and Healthy Life Expectancy (Male, Female and Overall).
+        </li>
+        <li>
+            Data transition for various years available (on the next page).
+        </li>
+        <li>
+            Visualize each section of data in a dedicated graph.
+        </li>
+        <li>
+            Tooltip available for viewing informative messages.
+        </li>
+        <li>
+            Can use zooming through mouse.
+        </li>
+    </ul>
+    You may come back to this page to update your selection.
+</p>
+
+<div class="cennter">
+    <div class="container">
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="countryButton">
+                Select Country
+                <span class="caret"></span>
+            </button>
+            <ul id="dropdownUL" class="dropdown-menu"></ul>
+            
+        </div>
+        
+    </div>
+    
+</div>
+
+<input type="button" id="continueButton" value="Continue" />
+
+
+<script>
+    var countrySelected = "";
+    function updatedCountrySelected() {
+        countrySelected = this.innerHTML;
+        console.log("Country selected is: " + countrySelected);
+        document.getElementById("countryButton").innerHTML = countrySelected ;
+    }
+
+    var dropdownUL = document.getElementById("dropdownUL");
+    var countriesList = @Html.Raw(Json.Encode(@ViewBag.countriesList));
+    for (var i = 0; i < countriesList.length; i++) {
+        var liValue = document.createElement('li');
+        var aValue = document.createElement('a');
+        aValue.href = "#";
+        aValue.onclick = updatedCountrySelected;
+        aValue.innerHTML = countriesList[i];
+        liValue.appendChild(aValue);
+        dropdownUL.appendChild(liValue);
+    }
+</script>
+
+<script type="text/javascript">
+    $('#continueButton').click(function () {
+        console.log("Redirecting...");
+        document.location = '@Url.Action("le_hale_single_country_graph", "Visualization")' + "?country="+ countrySelected;
+    });
+    
+</script>
+

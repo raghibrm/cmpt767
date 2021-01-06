@@ -1,0 +1,49 @@
+﻿
+@{
+    ViewBag.Title = "Select Countries";
+}
+
+
+<head>
+    <link rel="stylesheet" href="/css/countryCheckBoxes.css" />
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+</head>
+
+<br />
+<h4 style="text-align: center">Please select the countries first...</h4>
+<br />
+<p style="margin: 2px">
+    <ul>
+        <li>
+            Please select the countries and press continue to visualize relationship between Health Expenditures and Life Expectancy.
+        </li>
+        <li>
+            Tooltip available for viewing informative messages.
+        </li>
+        <li>
+            Can use zooming through mouse.
+        </li>
+    </ul>
+    You may come back to this page to update your selections.
+</p>
+
+<input type="button" id="continueButton" value="Continue" />
+<div id="countrySelectionDiv"></div>
+
+
+
+<script>
+    // variable declarations for scripts below
+    var countriesList = @Html.Raw(Json.Encode(@ViewBag.countriesList));
+    var countryAppender = "";
+</script>
+<script src="/scripts/all/addCountryCheckboxes.js"></script>
+<script src="/scripts/all/pageNavigationAfterCountryCheckBoxesSelection.js" type="text/javascript"></script>
+<script>
+    function navigate() {
+        document.location = '@Url.Action("che_le_relationship_graph", "Visualization")' + countryAppender;
+    }
+</script>
+

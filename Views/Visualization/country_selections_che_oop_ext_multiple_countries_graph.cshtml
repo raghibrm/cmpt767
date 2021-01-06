@@ -1,0 +1,53 @@
+﻿
+@{
+    ViewBag.Title = "Select Countries";
+}
+
+
+<head>
+    <link rel="stylesheet" href="/css/countryCheckBoxes.css" />
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+</head>
+
+<br />
+<h4 style="text-align: center">Please select the countries first...</h4>
+<br />
+<p style="margin: 2px">
+        <ul>
+     
+        <li>
+    Please select the countries and press continue to visualize the data for Current Health Expenditure, Out-of-pocket Expenditure and External health expenditure per capita.
+    </li>
+            <li>
+            Data transition for various years available (on the next page).
+        </li>
+        <li>
+            A logarithmic scale will be used if the difference between data for the countries is high, otherwise, a linear scale will be used.
+        </li>
+        <li>
+            Tooltip available for viewing informative messages.
+        </li>
+    </ul>
+    You may come back to this page to update your selections.
+</p>
+
+<input type="button" id="continueButton" value="Continue" />
+<div id="countrySelectionDiv"></div>
+
+
+
+<script>
+    // variable declarations for scripts below
+    var countriesList = @Html.Raw(Json.Encode(@ViewBag.countriesList));
+    var countryAppender = "";
+</script>
+<script src="/scripts/all/addCountryCheckboxes.js"></script>
+<script src="/scripts/all/pageNavigationAfterCountryCheckBoxesSelection.js" type="text/javascript"></script>
+<script>
+    function navigate() {
+        document.location = '@Url.Action("che_oop_ext_multiple_countries_graph", "Visualization")' + countryAppender;
+    }
+</script>
+

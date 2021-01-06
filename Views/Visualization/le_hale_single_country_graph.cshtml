@@ -1,0 +1,194 @@
+﻿
+@{
+    ViewBag.Title = "Life Expectancy and Healthy Life Expectancy";
+
+    string imagePath = Url.Content("/Content/Misc/arrowSign.jpg");
+}
+<head>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
+
+    <style>
+
+        .center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+    </style>
+</head>
+<h2>Life Expectancy and Healthy Life Expectancy</h2>
+
+<br />
+<h4>Update range for years:</h4>
+
+<div id="rangeDiv" class="center; border: solid">
+    <div class="container">
+        <div class="dropdown">
+
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="yearButton1">
+                @ViewBag.minYear
+                <span class="caret"></span>
+            </button>
+            <ul id="dropdownUL1" class="dropdown-menu"></ul>
+            <img src="@imagePath" style="height:50px" />
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="yearButton2">
+                @(ViewBag.minYear + ViewBag.dataTransitionSize - 1)
+                <span class="caret"></span>
+            </button>
+            <ul id="dropdownUL2" class="dropdown-menu"></ul>
+        </div>
+    </div>
+</div>
+<div id="visDivAllLE" class="center"></div>
+<br />
+<div id="visDiv1"></div>
+<div id="visDiv2"></div>
+<div id="visDiv3"></div>
+<div id="visDiv4"></div>
+<div id="visDiv5"></div>
+<div id="visDiv6"></div>
+
+
+
+
+<script>
+    //some important var declarations and data viz width manipulation
+    var size = @ViewBag.dataTransitionSize;
+    var minYear = @ViewBag.minYear;
+    console.log("transition size: " + size);
+    var defaultDataVizWidth = 460;
+
+    var leLabel = "Life Expectancy";
+    var haleLabel = "Healthy Life Expectancy";
+
+    var graphScaleType = "linear"; // default
+
+    // temporary values used to compute the necessity of log scale
+    var mindataValue = 20000;
+    var maxdataValue = 0;
+
+    var visDatas = [];
+
+</script>
+
+<script>
+    // script to prepare dropdown list and set actions
+    function yearUpdateUtil1() {
+        var yearValue = parseInt(this.innerHTML);
+        document.getElementById("yearButton1").innerHTML = yearValue + " <span class=\"caret\"></span>";
+        drawGraph(document.getElementById("yearButton1").innerHTML, document.getElementById("yearButton2").innerHTML);
+    }
+    function yearUpdateUtil2() {
+        var yearValue = parseInt(this.innerHTML);
+        document.getElementById("yearButton2").innerHTML = yearValue + " <span class=\"caret\"></span>";;
+        drawGraph(document.getElementById("yearButton1").innerHTML, document.getElementById("yearButton2").innerHTML);
+    }
+    var dropdownUL1 = document.getElementById("dropdownUL1");
+    for (var i = minYear; i < minYear + size; i++) {
+        var liValue = document.createElement('li');
+        var aValue = document.createElement('a');
+        aValue.href = "#";
+        aValue.onclick = yearUpdateUtil1;
+        aValue.innerHTML = i.toString();
+        liValue.appendChild(aValue);
+        dropdownUL1.appendChild(liValue);
+    }
+    var dropdownUL2 = document.getElementById("dropdownUL2");
+    for (var i = minYear; i < minYear + size; i++) {
+        var liValue = document.createElement('li');
+        var aValue = document.createElement('a');
+        aValue.href = "#";
+        aValue.onclick = yearUpdateUtil2;
+        aValue.innerHTML = i.toString();
+        liValue.appendChild(aValue);
+        dropdownUL2.appendChild(liValue);
+    }
+
+
+</script>
+
+
+
+
+<script>
+
+    var dataDictArray = @Html.Raw(Json.Encode(@ViewBag.dataDict));
+    for (var i = 0; i < dataDictArray.length; i++) {
+        for (var key in dataDictArray[i]) {
+            //{ "dataType": "Male Life Expectancy", "dataValue": 72.3, "year": "2000" },
+            var data = { "dataType": key, "dataValue": dataDictArray[i][key], "year": String(i+minYear) };
+            console.log(data);
+            visDatas.push(data);
+        }
+    }
+</script>
+
+<script>
+    //{ "dataType": "Male Life Expectancy", "dataValue": 73.3, "year": "2001" },
+    function drawGraphUtil(divId, graphType, filteredDatas, filterVals, width) {
+        document.getElementById(divId).innerHTML = "";
+
+        var vlSpec = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+            "description": "Raghib's CMPT 767 Project",
+            "data": {
+                "values": filteredDatas
+            },
+            "transform": [
+                { "filter": { "field": "dataType", "oneOf": filterVals } },
+            ],
+            "mark": graphType,
+            "width": width,
+            //"height": height,
+            "selection": {
+                "zoom_x": { "type": "interval", "bind": "scales", "encodings": ["x"] },
+                "zoom_y1": { "type": "interval", "bind": "scales", "encodings": ["y"] }
+            },
+            "encoding": {
+                "x": { "field": "year", "type": "ordinal" },
+                "y": { "field": "dataValue", "type": "quantitative" },
+                "tooltip": [
+                    { "field": "dataValue", "type": "quantitative" },
+                    { "field": "dataType", "type": "nominal" },
+                    { "field": "year", "type": "ordinal" }
+                ],
+                "color": { "field": "dataType", "type": "nominal" }
+            }
+        }
+        return vlSpec;
+    }
+
+    function drawGraph(start, end) {
+        var filteredDatas = [];
+        for (var i = 0; i < visDatas.length; i++) {
+            console.log("we have here: " + visDatas[i] + ", " + visDatas[i]["year"])
+            if (parseInt(visDatas[i]["year"]) >= parseInt(start) && parseInt(visDatas[i]["year"]) <= parseInt(end)) {
+                filteredDatas.push(visDatas[i]);
+            }
+        }
+
+        vegaEmbed('#visDivAllLE', drawGraphUtil(divId = "visDivAllLE", {"type": "line","point": true}, filteredDatas, ["Overall Life Expectancy", "Overall Healthy Life Expectancy", "Male Life Expectancy", "Female Life Expectancy", "Healthy Male Life Expectancy", "Healthy Female Life Expectancy"], 500));
+        vegaEmbed('#visDiv1', drawGraphUtil(divId = "visDiv1","bar" , filteredDatas, ["Overall Life Expectancy"],300));
+        vegaEmbed('#visDiv2', drawGraphUtil(divId = "visDiv2", "circle", filteredDatas, ["Overall Healthy Life Expectancy"], 300));
+        vegaEmbed('#visDiv3', drawGraphUtil(divId = "visDiv3", "square", filteredDatas, ["Male Life Expectancy"], 300));
+        vegaEmbed('#visDiv4', drawGraphUtil(divId = "visDiv4", "rule", filteredDatas, ["Female Life Expectancy"], 300));
+        vegaEmbed('#visDiv5', drawGraphUtil(divId = "visDiv5", "tick", filteredDatas, ["Healthy Male Life Expectancy"], 300));
+        vegaEmbed('#visDiv6', drawGraphUtil(divId = "visDiv6", "point", filteredDatas, ["Healthy Female Life Expectancy"], 300));
+
+    }
+    drawGraph("2000", "2016");
+    // Embed the visualization in the container with id `vis`
+
+</script>
+
+
+

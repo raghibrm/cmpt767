@@ -1,0 +1,146 @@
+﻿@{
+    ViewBag.Title = "Health Expenditure and Life Expectancy";
+}
+
+<head>
+    <!-- styling for graph div elements -->
+    <style>
+        .vega-actions a {
+            margin-right: 5px;
+        }
+        .center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
+</head>
+
+<h2>Health Expenditure (in US$) and Life Expectancy for @ViewBag.countryListAsString</h2>
+<br />
+<div id="visDivOLE" class="center"></div>
+<div id="visDivOHALE" class="center"></div>
+
+
+
+
+<script>
+    //some important var declarations and data viz width manipulation
+    var size = @ViewBag.dataTransitionSize;
+    var minYear = @ViewBag.minYear;
+    console.log("transition size: " + size);
+    var defaultDataVizWidth = 460;
+
+    var cheLabel = "Health Expenditure";
+    var oleLabel = "Overall Life Expectancy";
+    var haleLabel = "Overall Healthy Life Expectancy";
+
+    
+    var visDatasOLE = [];
+    var itrOLE = 0;
+    var visDatasOHALE = [];
+    var itrOHALE = 0;
+</script>
+
+
+
+<script>
+    // script for data processing
+    //data structure for graph: { "country": "India", "dataType": cheLabel, "expectancy": 72.3 },
+
+    //read che data
+    var chedataDictArray = @Html.Raw(Json.Encode(@ViewBag.che_datas));
+    var oledataDictArray = @Html.Raw(Json.Encode(@ViewBag.ole_datas));
+    var ohaledataDictArray = @Html.Raw(Json.Encode(@ViewBag.ohale_datas));
+
+    for (var i = 0; i < chedataDictArray.length; i++) {
+        for (var key in chedataDictArray[i]) {
+
+            var countryName = key;
+            var le_val = parseFloat(oledataDictArray[i][key]);
+            var hale_val = parseFloat(ohaledataDictArray[i][key]);
+
+            if (countryName.length > 10)
+                countryName = countryName.substr(0, 10) + "...";
+
+            var dataValue = parseFloat(chedataDictArray[i][key]);
+
+            console.log("Overall Life Expectancy is a number: " + oledataDictArray[i][key]);
+            if (oledataDictArray[i][key] != "") {
+                visDataOLE = {
+                    "country": countryName, "Health Expenditure Per Capita": dataValue, "Overall Life Expectancy": parseFloat(oledataDictArray[i][key]),
+                    "year": String(i + minYear), "itr": itrOLE
+                };
+                itrOLE = itrOLE + 1;
+                console.log("visDataOLE is: "+visDataOLE);
+                visDatasOLE.push(visDataOLE);
+            }
+
+            console.log("Overall Healthy Life Expectancy is a number: " + ohaledataDictArray[i][key]);
+            if (ohaledataDictArray[i][key] != "") {
+                visDataOHALE = {
+                    "country": countryName, "Health Expenditure Per Capita": dataValue, "Overall Healthy Life Expectancy": parseFloat(ohaledataDictArray[i][key]),
+                    "year": String(i + minYear), "itr": itrOHALE
+                };
+                itrOHALE = itrOHALE + 1;
+                console.log("visDataOHALE is: "+visDataOHALE);
+                visDatasOHALE.push(visDataOHALE);
+            }
+
+            
+
+        }
+    }
+
+
+</script>
+
+<script>
+
+    function drawGraph(visDatas, lifeExpectancyType, divID) {
+        var vlSpec1 = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+            "description": "Raghib's CMPT 767 Project",
+            "data": {
+                "values": visDatas
+            },
+            "mark": {
+                "type": "line",
+                "point": true,
+
+            },
+            "width": 400,
+            "height": 400,
+            "selection": {
+                "zoom_x": { "type": "interval", "bind": "scales", "encodings": ["x"] },
+                "zoom_y1": { "type": "interval", "bind": "scales", "encodings": ["y"] }
+            },
+            "encoding": {
+                "x": { "field": "Health Expenditure Per Capita", "type": "quantitative" },
+                "y": { "field": lifeExpectancyType, "type": "quantitative" },
+                "tooltip": [
+                    { "field": lifeExpectancyType, "type": "quantitative" },
+                    { "field": "country", "type": "nominal" },
+                    { "field": "year", "type": "ordinal" }
+                ],
+                "color": { "field": "country", "type": "nominal" }
+            }
+        }
+        // Embed the visualization in the container with id `vis`
+        vegaEmbed(divID, vlSpec1);
+
+    }
+    console.log(visDatasOLE);
+    console.log(visDatasOHALE);
+    drawGraph(visDatasOLE, "Overall Life Expectancy", "#visDivOLE");
+    drawGraph(visDatasOHALE, "Overall Healthy Life Expectancy", "#visDivOHALE");
+
+
+</script>
+
+

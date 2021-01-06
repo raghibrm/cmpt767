@@ -1,0 +1,20 @@
+﻿
+@{
+    ViewBag.Title = "Visualizations";
+
+}
+<br />
+<h2 style="text-align:center">Visualizations</h2>
+<br />
+<ul style="font-size:16px">
+    <li>
+    @Html.ActionLink("Visualize Current Health Expenditure, Out-of-pocket Expenditure and External health expenditure for selected countries", "country_selections_che_oop_ext_multiple_countries_graph", "Visualization")
+    </li>
+    <li>
+        @Html.ActionLink("Visualize Life Expectancy (Male, Female and Overall) and Healthy Life Expectancy (Male, Female and Overall) for a selected country", "country_selection_le_hale_single_country_graph", "Visualization")
+    </li>
+    <li>
+        @Html.ActionLink("Visualize relationship between Health Expenditures and Life Expectancy for selected countries", "country_selections_che_le_relationship_graph", "Visualization")
+    </li>
+</ul>
+

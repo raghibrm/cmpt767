@@ -1,0 +1,232 @@
+﻿
+@{
+    ViewBag.Title = "Health Expenditures";
+}
+
+<head>
+    <!-- styling for graph div elements -->
+    <style>
+        .vega-actions a {
+            margin-right: 5px;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
+</head>
+
+<h2 style="text-align: center">Current Health Expenditure, Out-of-pocket Expenditure and External health expenditure (all values in per capita)</h2> <br />
+<h4 style="text-align:center">Selected countries are: <u>@ViewBag.countryListAsString</u> </h4>
+<h4 id="yearTag" style="float:right">Year: <u>@(ViewBag.minYear+ ViewBag.dataTransitionSize - 1)</u> </h4>
+
+<div class="container">
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
+            Update year
+            <span class="caret"></span>
+        </button>
+        <ul id="dropdownUL" class="dropdown-menu">
+        </ul>
+    </div>
+</div>
+
+
+<div id="visDiv"></div>
+
+
+<script>
+    //some important var declarations and data viz width manipulation
+    var size = @ViewBag.dataTransitionSize;
+    var minYear = @ViewBag.minYear;
+    console.log("transition size: " + size);
+    var defaultDataVizWidth = 460;
+
+    var cheLabel = "Current Health Expenditure";
+    var oopLabel = "Out-of-pocket Expenditure";
+    var extLabel = "External health expenditure";
+
+    var graphScaleType = "linear"; // default
+
+    // temporary values used to compute the necessity of log scale
+    var mindataValue = 20000;
+    var maxdataValue = 0;
+
+    var visDatas1 = [];
+    var visDatas = [];
+    for (i = 0; i < size; i++) {
+        visDatas.push([]);
+    }
+</script>
+
+<script>
+    // script to prepare dropdown list and set actions
+    function yearUpdateUtil() {
+        var yearValue = parseInt(this.innerHTML);
+        console.log("Data will be updated for year: " + yearValue);
+        document.getElementById("yearTag").innerHTML = "Year: <u>" + yearValue+"</u>";
+        drawGraph(yearValue - @ViewBag.minYear);
+    }
+    var dropdownUL = document.getElementById("dropdownUL");
+    for (var i = minYear; i < minYear + size; i++) {
+        var liValue = document.createElement('li');
+        var aValue = document.createElement('a');
+        aValue.href = "#";
+        aValue.onclick = yearUpdateUtil;
+        aValue.innerHTML = i.toString();
+        liValue.appendChild(aValue);
+        dropdownUL.appendChild(liValue);
+    }
+    
+</script>
+
+<script>
+    // script for data processing
+    //data structure for graph: { "country": "India", "dataType": cheLabel, "expectancy": 72.3 },
+
+    //read che data
+    var chedataDictArray = @Html.Raw(Json.Encode(@ViewBag.che_datas));
+    for (var i = 0; i < chedataDictArray.length; i++) {
+        for (var key in chedataDictArray[i]) {
+            var countryName = key;
+            if (countryName.length > 10)
+                countryName = countryName.substr(0, 10) + "...";
+            var dataValue = parseFloat(chedataDictArray[i][key]);
+            visData = { "country": countryName, "dataType": cheLabel, "dataValue": parseFloat(chedataDictArray[i][key]) };
+            console.log(visData);
+            visDatas[i].push(visData);
+
+            if (mindataValue > parseFloat(chedataDictArray[i][key])) {
+                mindataValue = parseFloat(chedataDictArray[i][key]);
+            }
+            if (maxdataValue < parseFloat(chedataDictArray[i][key])) {
+                maxdataValue = parseFloat(chedataDictArray[i][key]);
+            }
+        }
+    }
+
+    if (maxdataValue > 10 * mindataValue) {
+        graphScaleType = "log";
+    }
+
+    // read oop data
+    mindataValue = 20000;
+    maxdataValue = 0;
+
+    var oopdataDictArray = @Html.Raw(Json.Encode(@ViewBag.oop_datas));
+    for (var i = 0; i < oopdataDictArray.length; i++) {
+        for (var key in oopdataDictArray[i]) {
+            var countryName = key;
+            if (countryName.length > 10)
+                countryName = countryName.substr(0, 10) + "...";
+            visData = { "country": countryName, "dataType": oopLabel, "dataValue": parseFloat(oopdataDictArray[i][key]) };
+            console.log(visData);
+            visDatas[i].push(visData);
+
+            if (mindataValue > parseFloat(oopdataDictArray[i][key])) {
+                mindataValue = parseFloat(oopdataDictArray[i][key]);
+            }
+            if (maxdataValue < parseFloat(oopdataDictArray[i][key])) {
+                maxdataValue = parseFloat(oopdataDictArray[i][key]);
+            }
+        }
+    }
+
+    if (maxdataValue > 10 * mindataValue) {
+        graphScaleType = "log";
+    }
+
+   // read ext data
+
+    mindataValue = 20000;
+    maxdataValue = 0;
+
+    var extdataDictArray = @Html.Raw(Json.Encode(@ViewBag.ext_datas));
+    for (var i = 0; i < extdataDictArray.length; i++) {
+        for (var key in extdataDictArray[i]) {
+            var countryName = key;
+            if (countryName.length > 10)
+                countryName = countryName.substr(0, 10) + "...";
+            visData = { "country": countryName, "dataType": extLabel, "dataValue": parseFloat(extdataDictArray[i][key]) };
+            console.log(visData);
+            visDatas[i].push(visData);
+
+            if (mindataValue > parseFloat(extdataDictArray[i][key])) {
+                mindataValue = parseFloat(extdataDictArray[i][key]);
+            }
+            if (maxdataValue < parseFloat(extdataDictArray[i][key])) {
+                maxdataValue = parseFloat(extdataDictArray[i][key]);
+            }
+        }
+    }
+
+    if (maxdataValue > 10 * mindataValue) {
+        graphScaleType = "log";
+    }
+
+    if (graphScaleType == "log") {
+        // 0 is not a valid value in log scale, change it slightly
+        for (j = 0; j < size; j++) {
+            for (var i = 0; i < visDatas[j].length; i++) {
+                console.log("data value is: " + visDatas[j][i].dataValue);
+                if (visDatas[j][i].dataValue <= 0) {
+                    visDatas[j][i].dataValue = 0.1;
+                }
+            }
+        }
+
+    }
+
+
+</script>
+
+<script>
+    function drawGraph(index) {
+        document.getElementById("visDiv").innerHTML = "";
+        console.log("piglt:" + index);
+        var vlSpec = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+            "data": {
+                "values": visDatas[index]
+                //{ "country": key, "dataType": cheLabel, "data": parseFloat(chedataDictArray[i][key]) };
+            },
+            "transform": [
+                //{ "filter": "datum.year == 1850" },
+                //{ "calculate": "datum.dataType == 2 ? 'Life Expectancy' : 'Healthy Life Expectancy'", "as": "Life Expectancy Type" }
+            ],
+            //"width": { "step": 12 },
+            "mark": { "type": "bar", "tooltip": true },
+            "height": 300,
+            "encoding": {
+                "column": {
+                    "field": "country", "type": "ordinal", "spacing": 10
+                },
+                "y": {
+                    "aggregate": "sum", "field": "dataValue",
+                    "title": "USD (per capita)",
+                    "axis": { "grid": false },
+                    "scale": { "type": graphScaleType }
+                },
+                "x": {
+                    "field": "dataType",
+                    "axis": { "title": "" }
+                },
+                "color": {
+                    "field": "dataType",
+                    "scale": { "range": ["#675193", "#ca8861", "#4295f5"] }
+                }
+            },
+            "config": {
+                "view": { "stroke": "transparent" },
+                "axis": { "domainWidth": 1 }
+            }
+        }
+        // Embed the visualization in the container with id `vis`
+        vegaEmbed('#visDiv', vlSpec);
+    }
+    drawGraph(@(ViewBag.dataTransitionSize - 1));
+</script>
+
+<br />
+<br />
+<br />
